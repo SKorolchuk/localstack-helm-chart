@@ -38,7 +38,7 @@ endpoints:
       containerPort: 4569
       servicePort: 4569
       nodePort: 31569
-      enabled: false
+      enabled: true
       backendUrl: ""
     - name: dynamodbstreams
       containerPort: 4570
@@ -50,7 +50,7 @@ endpoints:
       containerPort: 4571
       servicePort: 4571
       nodePort: 31571
-      enabled: false
+      enabled: true
       backendUrl: ""
     - name: s3
       containerPort: 4572
@@ -62,7 +62,7 @@ endpoints:
       containerPort: 4573
       servicePort: 4573
       nodePort: 31573
-      enabled: false
+      enabled: true
       backendUrl: ""
     - name: lambda
       containerPort: 4574
@@ -92,7 +92,7 @@ endpoints:
       containerPort: 4578
       servicePort: 4578
       nodePort: 31578
-      enabled: false
+      enabled: true
       backendUrl: ""
     - name: ses
       containerPort: 4579
@@ -156,11 +156,11 @@ resources:
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
   limits:
-    cpu: 750m
-    memory: 1536Mi
+    cpu: 250m
+    memory: 1024Mi
   requests:
-    cpu: 750m
-    memory: 1536Mi
+    cpu: 250m
+    memory: 1024Mi
 
 ## Persist data to a persitent volume
 persistence:
@@ -182,16 +182,13 @@ persistence:
   # storageClass: "standard"
 
 podSecurityContext:
-  runAsUser: 1000
-  runAsGroup: 3000
-  fsGroup: 2000
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001
 
 securityContext:
-  capabilities:
-    add:
-    - ALL
-  runAsNonRoot: true
-  runAsUser: 1000
+  runAsUser: 1001
+  runAsGroup: 1001
 
 nodeSelector: {}
 

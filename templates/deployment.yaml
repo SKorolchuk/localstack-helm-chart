@@ -86,30 +86,24 @@ spec:
               {{- end }}
             - name: PORT_WEB_UI
               value: {{ .Values.endpoints.web.containerPort | quote }}
-          # livenessProbe:
-          #   exec:
-          #     command:
-          #     - bash
-          #     - -c
-          #     - awslocal dynamodb list-tables \
-          #       && awslocal es list-domain-names \
-          #       && awslocal s3 ls \
-          #       && awslocal sqs list-queues
-          #   initialDelaySeconds: 45
-          #   periodSeconds: 10
-          #   timeoutSeconds: 8
-          # readinessProbe:
-          #   exec:
-          #     command:
-          #     - bash
-          #     - -c
-          #     - awslocal dynamodb list-tables \
-          #       && awslocal es list-domain-names \
-          #       && awslocal s3 ls \
-          #       && awslocal sqs list-queues
-          #   initialDelaySeconds: 45
-          #   periodSeconds: 15
-          #   timeoutSeconds: 12
+          livenessProbe:
+            exec:
+              command:
+              - bash
+              - -c
+              - awslocal s3 ls
+            initialDelaySeconds: 45
+            periodSeconds: 10
+            timeoutSeconds: 8
+          readinessProbe:
+            exec:
+              command:
+              - bash
+              - -c
+              - awslocal s3 ls
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 12
           volumeMounts:
             - name: datadir
               mountPath: /tmp/localstack
