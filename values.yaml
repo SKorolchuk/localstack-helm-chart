@@ -32,7 +32,7 @@ endpoints:
       containerPort: 4568
       servicePort: 4568
       nodePort: 31568
-      enabled: true
+      enabled: false
       backendUrl: ""
     - name: dynamodb
       containerPort: 4569
@@ -62,7 +62,7 @@ endpoints:
       containerPort: 4573
       servicePort: 4573
       nodePort: 31573
-      enabled: true
+      enabled: false
       backendUrl: ""
     - name: lambda
       containerPort: 4574
@@ -187,8 +187,8 @@ podSecurityContext:
   fsGroup: 1001
 
 securityContext:
-  runAsUser: 1001
-  runAsGroup: 1001
+  runAsUser: 0
+  privileged: true
 
 nodeSelector: {}
 

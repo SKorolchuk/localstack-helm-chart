@@ -110,7 +110,6 @@ spec:
             {{- if contains "docker" .Values.lambdaExecutor }}
             - name: dockersock
               mountPath: "/var/run/docker.sock"
-              readOnly: true
             {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
