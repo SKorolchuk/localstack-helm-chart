@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: Service
+metadata:
+  {{- if .Values.service.name }}
+  name: {{ .Values.service.name }}
+  {{- else }}
+  name: {{ include "localstack.fullname" . }}
+  {{- end }}
+  labels:
+    {{- include "localstack.labels" . | nindent 4 }}
+    {{- if .Values.service }}
+    {{- range $key, $value := .Values.service.labels }}
+      {{ $key }}: {{ $value | quote }}
+    {{- end }}
+    {{- end }}
+  annotations:
+    {{- if .Values.service }}
+    {{- range $key, $value := .Values.service.annotations }}
+      {{ $key }}: {{ $value | quote }}
+    {{- end }}
+    {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+  {{- $root := . }}
+    - name: web
+      protocol: TCP
+      {{- with .Values.endpoints.web }}
+      port: {{ .servicePort }}
+      targetPort: {{ .containerPort }}
+      {{- if contains "NodePort" $root.Values.service.type }}
+      {{- if .nodePort }}
+      nodePort: {{ .nodePort }}
+      {{- end }}
+      {{- end }}
+      {{- end }}
+    - name: edge
+      protocol: TCP
+      {{- with .Values.endpoints.edge }}
+      port: {{ .servicePort }}
+      targetPort: {{ .containerPort }}
+      {{- if contains "NodePort" $root.Values.service.type }}
+      {{- if .nodePort }}
+      nodePort: {{ .nodePort }}
+      {{- end }}
+      {{- end }}
+      {{- end }}
+  {{- range $index, $val := .Values.endpoints.awsFeatures }}
+  {{- if $val.enabled }}
+    - name: {{ $val.name }}
+      protocol: TCP
+      port: {{ $val.servicePort }}
+      targetPort: {{ $val.containerPort }}
+      {{- if contains "NodePort" $root.Values.service.type }}
+      {{- if $val.nodePort }}
+      nodePort: {{ $val.nodePort }}
+      {{- end }}
+      {{- end }}
+  {{- end }}
+  {{- end }}
+  selector:
+    {{- include "localstack.selectorLabels" . | nindent 4 }}

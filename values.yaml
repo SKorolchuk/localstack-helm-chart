@@ -1,0 +1,200 @@
+# Default values for localstack.
+image:
+  repository: localstack/localstack
+  tag: 0.11.3
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+service:
+  type: NodePort
+  # name: ""
+  # labels: []
+  # annotations: []
+
+endpoints:
+  hostExternal: null
+  web:
+    containerPort: 8080
+    servicePort: 8080
+    endpoint: /
+  edge:
+    containerPort: 4566
+    servicePort: 4566
+    nodePort: 31566
+  awsFeatures:
+    - name: apigateway
+      containerPort: 4567
+      servicePort: 4567
+      nodePort: 31567
+      enabled: true
+      backendUrl: ""
+    - name: kinesis
+      containerPort: 4568
+      servicePort: 4568
+      nodePort: 31568
+      enabled: true
+      backendUrl: ""
+    - name: dynamodb
+      containerPort: 4569
+      servicePort: 4569
+      nodePort: 31569
+      enabled: false
+      backendUrl: ""
+    - name: dynamodbstreams
+      containerPort: 4570
+      servicePort: 4570
+      nodePort: 31570
+      enabled: false
+      backendUrl: ""
+    - name: elasticsearch
+      containerPort: 4571
+      servicePort: 4571
+      nodePort: 31571
+      enabled: false
+      backendUrl: ""
+    - name: s3
+      containerPort: 4572
+      servicePort: 4572
+      nodePort: 31572
+      enabled: true
+      backendUrl: ""
+    - name: firehose
+      containerPort: 4573
+      servicePort: 4573
+      nodePort: 31573
+      enabled: false
+      backendUrl: ""
+    - name: lambda
+      containerPort: 4574
+      servicePort: 4574
+      nodePort: 31574
+      enabled: true
+      backendUrl: ""
+    - name: sns
+      containerPort: 4575
+      servicePort: 4575
+      nodePort: 31575
+      enabled: true
+      backendUrl: ""
+    - name: sqs
+      containerPort: 4576
+      servicePort: 4576
+      nodePort: 31576
+      enabled: true
+      backendUrl: ""
+    - name: redshift
+      containerPort: 4577
+      servicePort: 4577
+      nodePort: 31577
+      enabled: false
+      backendUrl: ""
+    - name: es
+      containerPort: 4578
+      servicePort: 4578
+      nodePort: 31578
+      enabled: false
+      backendUrl: ""
+    - name: ses
+      containerPort: 4579
+      servicePort: 4579
+      nodePort: 31579
+      enabled: true
+      backendUrl: ""
+    - name: route53
+      containerPort: 4580
+      servicePort: 4580
+      nodePort: 31580
+      enabled: false
+      backendUrl: ""
+    - name: cloudformation
+      containerPort: 4581
+      servicePort: 4581
+      nodePort: 31581
+      enabled: true
+      backendUrl: ""
+    - name: cloudwatch
+      containerPort: 4582
+      servicePort: 4582
+      nodePort: 31582
+      enabled: false
+      backendUrl: ""
+    - name: ssm
+      containerPort: 4583
+      servicePort: 4583
+      nodePort: 31583
+      enabled: true
+      backendUrl: ""
+
+useSsl: "false"
+defaultRegion: "us-east-1"
+kinesisErrorProbability: "0.0"
+dynamodbErrorProbability: "0.0"
+lambdaExecutor: "docker" # or local
+
+replicaCount: 1
+rbac:
+    enabled: true
+
+ingress:
+  enabled: true
+  # Used to create an Ingress record.
+  hosts:
+    - aws.local.stack
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: "true"
+# Secrets must be manually created in the namespace.
+# tls: []
+#  - secretName: chart-example-tls
+#    hosts:
+#      - aws.local.stack
+
+
+resources:
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  limits:
+    cpu: 750m
+    memory: 1536Mi
+  requests:
+    cpu: 750m
+    memory: 1536Mi
+
+## Persist data to a persitent volume
+persistence:
+  enabled: true
+  ## Persistent Volume Storage Size.
+  size: 20Gi
+  # Persistent Volume Access Mode.
+  accessMode: ReadWriteOnce
+  ## Name of existing persistent volume to attach
+  # existingClaim: "hostpath"
+
+  ##  Persistent Volume Storage Class
+  ## If defined, storageClassName: <storageClass>
+  ## If set to "-", storageClassName: "", which disables dynamic provisioning
+  ## If undefined (the default) or set to null, no storageClassName spec is
+  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+  ##   GKE, AWS & OpenStack)
+  ##
+  # storageClass: "standard"
+
+podSecurityContext:
+  runAsUser: 1000
+  runAsGroup: 3000
+  fsGroup: 2000
+
+securityContext:
+  capabilities:
+    add:
+    - ALL
+  runAsNonRoot: true
+  runAsUser: 1000
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

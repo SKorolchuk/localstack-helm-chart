@@ -1,0 +1,148 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "localstack.fullname" . }}
+  labels:
+    {{- include "localstack.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "localstack.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "localstack.selectorLabels" . | nindent 8 }}
+    spec:
+    {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      {{- if .Values.rbac.enabled }}
+      serviceAccountName: "{{ include "localstack.serviceAccountName" . }}"
+      {{- else }}
+      serviceAccountName: "default"
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.endpoints.web.containerPort }}
+            - containerPort: {{ .Values.endpoints.edge.containerPort }}
+          {{- range $index, $val := .Values.endpoints.awsFeatures }}
+          {{- if $val.enabled }}
+            - containerPort: {{ $val.containerPort }}
+          {{- end }}
+          {{- end }}
+          env:
+            - name: EDGE_PORT
+              value: "{{ .Values.endpoints.edge.containerPort }}"
+            - name: USE_SSL
+              value: {{ .Values.useSsl | quote }}
+            - name: SERVICES
+              value: "{{- range $index, $val := .Values.endpoints.awsFeatures -}}
+                      {{- if $val.enabled -}}{{- if $index -}},{{- end -}}{{- $val.name -}}:{{- $val.containerPort -}}{{- end -}}
+                      {{- end -}}"
+              {{- if .Values.defaultRegion }}
+            - name: DEFAULT_REGION
+              value: {{ .Values.defaultRegion | quote }}
+              {{- end }}
+              {{- if .Values.kinesisErrorProbability }}
+            - name: KINESIS_ERROR_PROBABILITY
+              value: {{ .Values.kinesisErrorProbability | quote }}
+              {{- end }}
+              {{- if .Values.dynamodbErrorProbability }}
+            - name: DYNAMODB_ERROR_PROBABILITY
+              value: {{ .Values.dynamodbErrorProbability | quote }}
+              {{- end }}
+              {{- if .Values.lambdaExecutor }}
+            - name: LAMBDA_EXECUTOR
+              value: {{ .Values.lambdaExecutor | quote }}
+              {{- end }}
+            - name: HOSTNAME_EXTERNAL
+              {{- if .Values.endpoints.hostExternal }}
+              value: {{ .Values.endpoints.hostExternal | quote }}
+              {{- else }}
+              value: "{{ include "localstack.fullname" . }}.{{ .Release.Namespace }}"
+              {{- end }}
+              {{- range $index, $val := .Values.endpoints.awsFeatures }}
+              {{- if $val.enabled }}
+            - name: {{ $val.name | upper }}_PORT
+              value: {{ $val.containerPort | quote }}
+            - name: {{ $val.name | upper }}_PORT_EXTERNAL
+              value: {{ $val.servicePort | quote }}
+            - name: {{ $val.name | upper }}_BACKEND
+              value: {{ $val.backendUrl | quote }}
+              {{- end }}
+              {{- end }}
+              {{- if .Values.persistence.enabled }}
+            - name: DATA_DIR
+              value: "/tmp/localstack/data"
+              {{- end }}
+            - name: PORT_WEB_UI
+              value: {{ .Values.endpoints.web.containerPort | quote }}
+          # livenessProbe:
+          #   exec:
+          #     command:
+          #     - bash
+          #     - -c
+          #     - awslocal dynamodb list-tables \
+          #       && awslocal es list-domain-names \
+          #       && awslocal s3 ls \
+          #       && awslocal sqs list-queues
+          #   initialDelaySeconds: 45
+          #   periodSeconds: 10
+          #   timeoutSeconds: 8
+          # readinessProbe:
+          #   exec:
+          #     command:
+          #     - bash
+          #     - -c
+          #     - awslocal dynamodb list-tables \
+          #       && awslocal es list-domain-names \
+          #       && awslocal s3 ls \
+          #       && awslocal sqs list-queues
+          #   initialDelaySeconds: 45
+          #   periodSeconds: 15
+          #   timeoutSeconds: 12
+          volumeMounts:
+            - name: datadir
+              mountPath: /tmp/localstack
+            {{- if contains "docker" .Values.lambdaExecutor }}
+            - name: dockersock
+              mountPath: "/var/run/docker.sock"
+              readOnly: true
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      volumes:
+        - name: datadir
+      {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim | default ( include "localstack.fullname" . )}}
+      {{- else }}
+          emptyDir: {}
+      {{- end }}
+      {{- if contains "docker" .Values.lambdaExecutor }}
+        - name: dockersock
+          hostPath:
+            path: "/var/run/docker.sock"
+            type: Socket
+      {{- end }}
